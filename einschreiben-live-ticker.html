@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Einschreiben Live Ticker</title>
+  <link rel="preconnect" href="https://api.fontshare.com">
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&f[]=boska@500,700&display=swap" rel="stylesheet">
+  <style>
+    :root, [data-theme="light"] {
+      --text-xs: clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
+      --text-sm: clamp(0.875rem, 0.8rem + 0.35vw, 1rem);
+      --text-base: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
+      --text-lg: clamp(1.125rem, 1rem + 0.75vw, 1.5rem);
+      --text-xl: clamp(1.5rem, 1.2rem + 1.25vw, 2.25rem);
+      --text-2xl: clamp(2rem, 1.2rem + 2.5vw, 3.5rem);
+      --space-1: 0.25rem; --space-2: 0.5rem; --space-3: 0.75rem; --space-4: 1rem; --space-5: 1.25rem; --space-6: 1.5rem; --space-8: 2rem; --space-10: 2.5rem; --space-12: 3rem; --space-16: 4rem;
+      --color-bg: #f7f6f2; --color-surface: #f9f8f5; --color-surface-2: #fbfbf9; --color-surface-offset: #f3f0ec; --color-border: #d4d1ca; --color-divider: #dcd9d5;
+      --color-text: #28251d; --color-text-muted: #66645d; --color-text-faint: #98958f; --color-text-inverse: #f9f8f4;
+      --color-primary: #01696f; --color-primary-hover: #0c4e54; --color-primary-highlight: #cedcd8; --color-success: #437a22; --color-warning: #964219; --color-error: #a12c7b;
+      --radius-sm: 0.375rem; --radius-md: 0.5rem; --radius-lg: 0.75rem; --radius-xl: 1rem; --radius-full: 9999px;
+      --shadow-sm: 0 1px 2px rgba(40,37,29,.06); --shadow-md: 0 8px 24px rgba(40,37,29,.08); --shadow-lg: 0 24px 48px rgba(40,37,29,.12);
+      --font-display: 'Boska', Georgia, serif; --font-body: 'Satoshi', Inter, sans-serif;
+      --transition-interactive: 180ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    [data-theme="dark"] {
+      --color-bg: #171614; --color-surface: #1c1b19; --color-surface-2: #201f1d; --color-surface-offset: #1d1c1a; --color-border: #393836; --color-divider: #262523;
+      --color-text: #cdccca; --color-text-muted: #a5a39f; --color-text-faint: #7b7975; --color-text-inverse: #2b2a28;
+      --color-primary: #4f98a3; --color-primary-hover: #227f8b; --color-primary-highlight: #313b3b; --shadow-sm: 0 1px 2px rgba(0,0,0,.2); --shadow-md: 0 8px 24px rgba(0,0,0,.28); --shadow-lg: 0 24px 48px rgba(0,0,0,.38);
+      --color-success: #6daa45; --color-warning: #bb653b; --color-error: #d163a7;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { -webkit-font-smoothing: antialiased; scroll-behavior: smooth; }
+    body { min-height: 100dvh; font-family: var(--font-body); font-size: var(--text-base); line-height: 1.6; color: var(--color-text); background: radial-gradient(circle at top right, color-mix(in srgb, var(--color-primary) 10%, transparent), transparent 30%), var(--color-bg); }
+    img, svg { display: block; max-width: 100%; }
+    button, input { font: inherit; color: inherit; }
+    a, button, input { transition: background var(--transition-interactive), color var(--transition-interactive), border-color var(--transition-interactive), transform var(--transition-interactive), box-shadow var(--transition-interactive); }
+    :focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; border-radius: var(--radius-sm); }
+    .sr-only { position:absolute; width:1px; height:1px; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); }
+    .shell { max-width: 1100px; margin: 0 auto; padding: var(--space-4); }
+    .skip-link { position:absolute; left:-9999px; top:0; }
+    .skip-link:focus { left: var(--space-4); top: var(--space-4); background: var(--color-primary); color: var(--color-text-inverse); padding: var(--space-2) var(--space-3); z-index: 20; }
+    header { display:flex; align-items:center; justify-content:space-between; gap:var(--space-4); padding: var(--space-4) 0 var(--space-8); }
+    .brand { display:flex; gap:var(--space-3); align-items:center; }
+    .brand svg { width: 38px; height: 38px; color: var(--color-primary); }
+    .brand-name { font-family: var(--font-display); font-size: var(--text-lg); line-height: 1; }
+    .theme-toggle { min-width:44px; min-height:44px; display:grid; place-items:center; border:1px solid color-mix(in srgb, var(--color-text) 12%, transparent); border-radius: var(--radius-full); background: var(--color-surface); box-shadow: var(--shadow-sm); }
+    .hero { display:grid; grid-template-columns: 1.2fr .8fr; gap: var(--space-6); align-items: stretch; }
+    .panel { background: color-mix(in srgb, var(--color-surface) 92%, transparent); border:1px solid color-mix(in srgb, var(--color-text) 12%, transparent); border-radius: var(--radius-xl); box-shadow: var(--shadow-md); }
+    .hero-main { padding: var(--space-8); display:flex; flex-direction:column; justify-content:space-between; gap: var(--space-6); }
+    .eyebrow { display:inline-flex; gap:var(--space-2); align-items:center; font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .14em; color: var(--color-text-muted); }
+    .eyebrow::before { content:""; width:10px; height:10px; border-radius:50%; background: var(--color-primary); box-shadow: 0 0 0 6px color-mix(in srgb, var(--color-primary) 12%, transparent); }
+    h1 { font-family: var(--font-display); font-size: var(--text-2xl); line-height: 1.05; max-width: 12ch; }
+    .lede { max-width: 60ch; color: var(--color-text-muted); }
+    .tracking-id { display:inline-flex; align-items:center; gap: var(--space-2); border:1px solid color-mix(in srgb, var(--color-primary) 25%, transparent); background: var(--color-primary-highlight); color: var(--color-primary-hover); padding: var(--space-2) var(--space-3); border-radius: var(--radius-full); font-size: var(--text-sm); font-weight: 700; width: fit-content; }
+    .status-grid { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: var(--space-4); padding: var(--space-6); }
+    .stat { background: var(--color-surface-2); border:1px solid color-mix(in srgb, var(--color-text) 10%, transparent); border-radius: var(--radius-lg); padding: var(--space-4); }
+    .stat-label { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .12em; color: var(--color-text-muted); margin-bottom: var(--space-2); }
+    .stat-value { font-size: var(--text-lg); font-weight: 700; line-height: 1.2; }
+    main { padding-bottom: var(--space-12); }
+    .layout { display:grid; grid-template-columns: 1.3fr .7fr; gap: var(--space-6); margin-top: var(--space-6); }
+    .ticker, .side { padding: var(--space-6); }
+    .section-title { font-size: var(--text-lg); font-weight: 700; margin-bottom: var(--space-4); }
+    .controls { display:flex; flex-wrap:wrap; gap:var(--space-3); margin-bottom: var(--space-5); }
+    .btn { min-height:44px; padding: var(--space-2) var(--space-4); border-radius: var(--radius-full); border:1px solid transparent; }
+    .btn-primary { background: var(--color-primary); color: var(--color-text-inverse); box-shadow: var(--shadow-sm); }
+    .btn-primary:hover { background: var(--color-primary-hover); }
+    .btn-secondary { background: var(--color-surface-offset); border-color: color-mix(in srgb, var(--color-text) 14%, transparent); }
+    .status-pill { display:inline-flex; align-items:center; gap:var(--space-2); border-radius:var(--radius-full); padding: .45rem .8rem; font-size: var(--text-sm); font-weight:700; width: fit-content; }
+    .is-success { background: color-mix(in srgb, var(--color-success) 15%, transparent); color: var(--color-success); }
+    .is-warning { background: color-mix(in srgb, var(--color-warning) 15%, transparent); color: var(--color-warning); }
+    .is-error { background: color-mix(in srgb, var(--color-error) 15%, transparent); color: var(--color-error); }
+    .timeline { display:grid; gap: var(--space-4); }
+    .entry { display:grid; grid-template-columns: auto 1fr; gap: var(--space-4); align-items:start; padding: var(--space-4); border:1px solid color-mix(in srgb, var(--color-text) 10%, transparent); border-radius: var(--radius-lg); background: linear-gradient(180deg, var(--color-surface-2), var(--color-surface)); opacity: 0; animation: fade .45s ease forwards; }
+    .entry-dot { width: 14px; height: 14px; border-radius: 50%; background: var(--color-primary); margin-top: .35rem; box-shadow: 0 0 0 6px color-mix(in srgb, var(--color-primary) 12%, transparent); }
+    .entry-time { font-size: var(--text-sm); color: var(--color-text-muted); margin-bottom: var(--space-1); }
+    .entry-title { font-weight: 700; margin-bottom: var(--space-1); }
+    .entry-desc { color: var(--color-text-muted); }
+    .meta-list { display:grid; gap: var(--space-3); }
+    .meta-item { padding-bottom: var(--space-3); border-bottom: 1px solid var(--color-divider); }
+    .meta-item:last-child { border-bottom: 0; padding-bottom: 0; }
+    .meta-term { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .12em; color: var(--color-text-muted); margin-bottom: var(--space-1); }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .note { margin-top: var(--space-5); color: var(--color-text-muted); font-size: var(--text-sm); }
+    .tiny { font-size: var(--text-xs); color: var(--color-text-faint); }
+    .pulse { position:relative; }
+    .pulse::after { content:""; position:absolute; inset:-4px; border-radius:inherit; border:1px solid color-mix(in srgb, var(--color-primary) 22%, transparent); animation:pulse 1.8s ease-out infinite; }
+    .log { white-space: pre-wrap; background: var(--color-surface-offset); border-radius: var(--radius-lg); padding: var(--space-4); font-size: var(--text-sm); color: var(--color-text-muted); }
+    @keyframes fade { from { opacity: 0; filter: blur(4px); } to { opacity: 1; filter: blur(0); } }
+    @keyframes pulse { 0% { opacity:.8; transform:scale(1); } 100% { opacity:0; transform:scale(1.08); } }
+    @media (max-width: 920px) {
+      .hero, .layout { grid-template-columns: 1fr; }
+      .hero-main { padding: var(--space-6); }
+      .status-grid { grid-template-columns: 1fr 1fr; }
+      h1 { max-width: none; }
+    }
+    @media (max-width: 560px) {
+      .shell { padding: var(--space-3); }
+      .status-grid { grid-template-columns: 1fr; }
+      .entry { grid-template-columns: 1fr; }
+      .entry-dot { margin-top: 0; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <a href="#content" class="skip-link">Zum Inhalt springen</a>
+  <div class="shell">
+    <header>
+      <div class="brand" aria-label="Einschreiben Live Ticker">
+        <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect x="4" y="10" width="30" height="24" rx="5" stroke="currentColor" stroke-width="3"/>
+          <path d="M10 16L19 22L28 16" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M31 29L37 23L43 29" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M37 15V23" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+        </svg>
+        <div>
+          <div class="brand-name">Einschreiben Ticker</div>
+          <div class="tiny">Live-Ansicht für registrierte Briefsendungen</div>
+        </div>
+      </div>
+      <button class="theme-toggle" data-theme-toggle aria-label="Farbmodus wechseln" title="Farbmodus wechseln">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+    </header>
+
+    <main id="content">
+      <section class="hero">
+        <article class="panel hero-main">
+          <div>
+            <div class="eyebrow">Aktiver Live-Ticker</div>
+            <h1>Sendung in Echtzeit überwachen.</h1>
+            <p class="lede">Diese Ansicht aktualisiert den Status des Einschreibens automatisch im 30-Sekunden-Takt. Primär wird die öffentliche DHL-Tracking-Schnittstelle abgefragt. Falls der direkte Abruf im Browser blockiert wird, bleibt die offizielle Tracking-Seite als Fallback verlinkt.</p>
+          </div>
+          <div class="tracking-id mono">RT484715858DE</div>
+        </article>
+        <aside class="panel status-grid">
+          <div class="stat">
+            <div class="stat-label">Aktueller Status</div>
+            <div class="stat-value" id="currentStatus">Warte auf Abruf</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Letzte Aktualisierung</div>
+            <div class="stat-value" id="lastUpdate">—</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Quelle</div>
+            <div class="stat-value" id="sourceLabel">DHL API</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Polling</div>
+            <div class="stat-value">30 Sekunden</div>
+          </div>
+        </aside>
+      </section>
+
+      <section class="layout">
+        <article class="panel ticker">
+          <div class="section-title">Ticker</div>
+          <div class="controls">
+            <button class="btn btn-primary pulse" id="refreshBtn">Jetzt aktualisieren</button>
+            <a class="btn btn-secondary" href="https://www.deutschepost.de/de/s/sendungsverfolgung.html" target="_blank" rel="noopener noreferrer">Offizielle Deutsche-Post-Ansicht</a>
+          </div>
+          <div id="healthPill" class="status-pill is-warning">Initialisierung läuft</div>
+          <div class="note" id="messageBox">Es wurden noch keine Tracking-Ereignisse geladen.</div>
+          <div class="timeline" id="timeline"></div>
+        </article>
+
+        <aside class="panel side">
+          <div class="section-title">Details</div>
+          <div class="meta-list">
+            <div class="meta-item">
+              <div class="meta-term">Sendungsnummer</div>
+              <div class="mono">RT484715858DE</div>
+            </div>
+            <div class="meta-item">
+              <div class="meta-term">Direktlink Tracking</div>
+              <div><a id="directLink" href="https://www.deutschepost.de/de/s/sendungsverfolgung.html?piececode=RT484715858DE" target="_blank" rel="noopener noreferrer">Tracking im Browser öffnen</a></div>
+            </div>
+            <div class="meta-item">
+              <div class="meta-term">API-Endpunkt</div>
+              <div class="tiny">https://api-eu.dhl.com/track/shipments?trackingNumber=RT484715858DE</div>
+            </div>
+            <div class="meta-item">
+              <div class="meta-term">Letztes Rohprotokoll</div>
+              <div id="rawLog" class="log">Noch keine Antwort.</div>
+            </div>
+          </div>
+        </aside>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const trackingNumber = 'RT484715858DE';
+    const pollMs = 30000;
+    const els = {
+      currentStatus: document.getElementById('currentStatus'),
+      lastUpdate: document.getElementById('lastUpdate'),
+      sourceLabel: document.getElementById('sourceLabel'),
+      timeline: document.getElementById('timeline'),
+      messageBox: document.getElementById('messageBox'),
+      refreshBtn: document.getElementById('refreshBtn'),
+      healthPill: document.getElementById('healthPill'),
+      rawLog: document.getElementById('rawLog')
+    };
+
+    function setTheme() {
+      const root = document.documentElement;
+      let current = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      root.setAttribute('data-theme', current);
+      const btn = document.querySelector('[data-theme-toggle]');
+      btn.addEventListener('click', () => {
+        current = current === 'dark' ? 'light' : 'dark';
+        root.setAttribute('data-theme', current);
+        btn.innerHTML = current === 'dark'
+          ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>'
+          : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+      });
+    }
+
+    function formatDate(value) {
+      if (!value) return '—';
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return value;
+      return new Intl.DateTimeFormat('de-DE', { dateStyle: 'medium', timeStyle: 'medium' }).format(date);
+    }
+
+    function setHealth(kind, text) {
+      els.healthPill.className = 'status-pill ' + kind;
+      els.healthPill.textContent = text;
+    }
+
+    function escapeHtml(str) {
+      return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+    }
+
+    function renderEvents(events) {
+      if (!events.length) {
+        els.timeline.innerHTML = '';
+        return;
+      }
+      els.timeline.innerHTML = events.map(ev => `
+        <article class="entry">
+          <div class="entry-dot" aria-hidden="true"></div>
+          <div>
+            <div class="entry-time">${escapeHtml(formatDate(ev.timestamp || ev.date || ev.time))}</div>
+            <div class="entry-title">${escapeHtml(ev.status || ev.description || 'Tracking-Ereignis')}</div>
+            <div class="entry-desc">${escapeHtml(ev.details || ev.location || ev.raw || '')}</div>
+          </div>
+        </article>
+      `).join('');
+    }
+
+    function normalizeDhl(data) {
+      const shipment = data?.shipments?.[0] || data?.results?.[0] || null;
+      if (!shipment) return null;
+      const latest = shipment.status || shipment?.events?.[0] || {};
+      const events = (shipment.events || []).map(ev => ({
+        timestamp: ev.timestamp || ev.date,
+        status: ev.status || ev.description || ev.statusCode || 'Status',
+        details: [ev.description, ev.location?.address?.addressLocality, ev.location?.address?.countryCode].filter(Boolean).join(' · ') || JSON.stringify(ev.location || {})
+      }));
+      return {
+        currentStatus: latest.status || latest.description || shipment?.details?.summary || shipment?.service || 'Status verfügbar',
+        updatedAt: latest.timestamp || shipment?.estimatedDeliveryTime || new Date().toISOString(),
+        source: 'DHL API',
+        events
+      };
+    }
+
+    async function fetchOfficialApi() {
+      const endpoint = `https://api-eu.dhl.com/track/shipments?trackingNumber=${encodeURIComponent(trackingNumber)}`;
+      const headers = { 'Accept': 'application/json' };
+      const response = await fetch(endpoint, { headers });
+      const text = await response.text();
+      els.rawLog.textContent = text.slice(0, 2000) || 'Leere Antwort';
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = JSON.parse(text);
+      return normalizeDhl(data);
+    }
+
+    function fallbackData(reason) {
+      return {
+        currentStatus: 'Direkter Browserabruf blockiert',
+        updatedAt: new Date().toISOString(),
+        source: 'Fallback',
+        events: [{
+          timestamp: new Date().toISOString(),
+          status: 'Manueller Abruf erforderlich',
+          details: `Die DHL- oder Deutsche-Post-Schnittstelle verweigert im Browser häufig CORS oder API-Key-freie Direktzugriffe. Grund: ${reason}`
+        }]
+      };
+    }
+
+    async function refresh() {
+      els.refreshBtn.disabled = true;
+      els.messageBox.textContent = 'Tracking wird aktualisiert.';
+      setHealth('is-warning', 'Abruf läuft');
+      try {
+        const data = await fetchOfficialApi();
+        if (!data) throw new Error('Keine verwertbaren Tracking-Daten');
+        els.currentStatus.textContent = data.currentStatus;
+        els.lastUpdate.textContent = formatDate(data.updatedAt || new Date().toISOString());
+        els.sourceLabel.textContent = data.source;
+        renderEvents(data.events || []);
+        els.messageBox.textContent = data.events?.length ? 'Tracking-Ereignisse geladen.' : 'Keine Ereignisse in API-Antwort enthalten.';
+        setHealth('is-success', 'Live verbunden');
+      } catch (error) {
+        const data = fallbackData(error.message);
+        els.currentStatus.textContent = data.currentStatus;
+        els.lastUpdate.textContent = formatDate(data.updatedAt);
+        els.sourceLabel.textContent = data.source;
+        renderEvents(data.events);
+        els.messageBox.textContent = 'Direkte Live-Abfrage im Browser gescheitert. Offizielle Tracking-Seite als Fallback verwenden.';
+        setHealth('is-error', 'API blockiert');
+        els.rawLog.textContent = `Fehler: ${error.message}`;
+      } finally {
+        els.refreshBtn.disabled = false;
+      }
+    }
+
+    setTheme();
+    els.refreshBtn.addEventListener('click', refresh);
+    refresh();
+    setInterval(refresh, pollMs);
+  </script>
+</body>
+</html>
