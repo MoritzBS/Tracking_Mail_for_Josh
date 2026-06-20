@@ -181,7 +181,7 @@
             </div>
             <div class="meta-item">
               <div class="meta-term">API-Endpunkt</div>
-              <div class="tiny">https://api-eu.dhl.com/track/shipments?trackingNumber=RT484715858DE</div>
+              <div class="tiny">/.netlify/functions/track?number=RT484715858DE</div>
             </div>
             <div class="meta-item">
               <div class="meta-term">Letztes Rohprotokoll</div>
@@ -272,8 +272,10 @@
     }
 
     async function fetchOfficialApi() {
-      const endpoint = `https://api-eu.dhl.com/track/shipments?trackingNumber=${encodeURIComponent(trackingNumber)}`;
+      // Call Netlify Function instead of DHL endpoint directly to keep API key server-side and avoid CORS.
+      const endpoint = `/.netlify/functions/track?number=${encodeURIComponent(trackingNumber)}`;
       const headers = { 'Accept': 'application/json' };
+
       const response = await fetch(endpoint, { headers });
       const text = await response.text();
       els.rawLog.textContent = text.slice(0, 2000) || 'Leere Antwort';
